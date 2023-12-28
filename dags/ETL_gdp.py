@@ -10,6 +10,7 @@ from airflow.operators.python_operator import PythonOperator
 #from airflow.utils.dates import days_ago
 import pandas as pd
 import os
+import smtplib
 
 dag_path = os.getcwd()     #path original.. home en Docker
 
@@ -140,7 +141,22 @@ def cargar_en_redshift( ):
         cur.execute("COMMIT")
         print(f'Proceso terminado. Insertados {len(values)} nuevos registros.')
     
-
+def enviar():
+    try:
+        today = date.today()
+        x=smtplib.SMTP('smtp.gmail.com',587)
+        x.starttls()
+        x.login('hgkerz@gmail.com','xfuzqeopwyrwffrj')
+        subject=f'GDP {today.year}-{today.month}-{today.day} Successfull'
+        body_text='La actualizacion de la data de GDP fue exitosa'
+        message='Subject: {}\n\n{}'.format(subject,body_text)
+        x.sendmail('hgkerz@gmail.com','hgkerz@gmail.com',message)
+        print('Exito')
+    except Exception as exception:
+        print(exception)
+        print('Failure')
+        
+        
 # Tareas
 ##1. Extraccion
 task_1 = PythonOperator(
@@ -171,5 +187,12 @@ task_32 = PythonOperator(
     dag=gdp_dag,
 )
 
+
+# 3.2 Envio final
+task_4= PythonOperator(
+    task_id='envio_mail',
+    python_callable=enviar,
+    dag=gdp_dag,
+)
 # Definicion orden de tareas
-task_1 >> task_2 >> task_31 >> task_32
+task_1 >> task_2 >> task_31 >> task_32 >> task_4

@@ -1,2 +1,6 @@
 logs/scheduler/latest
 *.log
+*.json
+*.csv
+*.cfg
+*.txt
